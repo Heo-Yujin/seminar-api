@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: mariadb:10.6
+    container_name: seminar_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: seminar_db
+      MYSQL_USER: seminar_user
+      MYSQL_PASSWORD: seminar_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - seminar_data:/var/lib/mysql
+      - ./migrations:/docker-entrypoint-initdb.d
+
+  api:
+    build: .
+    container_name: seminar_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: db
+      DB_USER: seminar_user
+      DB_PASSWORD: seminar_password
+      DB_NAME: seminar_db
+    depends_on:
+      - db
+
+volumes:
+  seminar_data:
