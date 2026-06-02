@@ -114,20 +114,36 @@ h3 {
   color: var(--muted);
 }
 
-.spec-grid {
+.feature-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
-code {
-  display: block;
-  margin-top: 7px;
-  padding: 8px 10px;
+.feature-item {
+  min-height: 132px;
+  border: 1px solid var(--line);
   border-radius: 6px;
-  background: #eef3ef;
-  color: #24413d;
+  padding: 14px;
+  background: #f7faf7;
+}
+
+.feature-item p {
+  min-height: 40px;
+  margin: 10px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.feature-item span {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: #e1efe9;
+  color: #1d5e55;
   font-size: 13px;
+  font-weight: 700;
 }
 
 .form-grid,
@@ -143,6 +159,24 @@ code {
   grid-template-columns: repeat(7, minmax(120px, 1fr));
 }
 
+.lookup-bar {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) auto minmax(220px, 1fr);
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+.detail-box {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: #f7faf7;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 label span {
   display: block;
   margin-bottom: 6px;
@@ -151,7 +185,8 @@ label span {
   font-weight: 700;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
@@ -162,6 +197,11 @@ input {
 }
 
 input:focus {
+  border-color: var(--accent);
+  outline: 3px solid rgba(39, 124, 112, 0.16);
+}
+
+select:focus {
   border-color: var(--accent);
   outline: 3px solid rgba(39, 124, 112, 0.16);
 }
@@ -272,19 +312,21 @@ tr:last-child td {
     flex-direction: column;
   }
 
-  .spec-grid,
+  .feature-grid,
   .form-grid,
   .reservation-form,
-  .filters {
+  .filters,
+  .lookup-bar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 620px) {
-  .spec-grid,
+  .feature-grid,
   .form-grid,
   .reservation-form,
-  .filters {
+  .filters,
+  .lookup-bar {
     grid-template-columns: 1fr;
   }
 

@@ -20,6 +20,10 @@ def test_index_page_renders(client):
     response = client.get('/')
     assert response.status_code == 200
     assert b"Seminar Room Admin" in response.data
+    assert b'<select name="name"' in response.data
+    assert b'<select name="room_id"' in response.data
+    assert b'name="capacity" id="roomCapacity" type="number"' in response.data
+    assert b"readonly" in response.data
 
 # 2. 세미나룸 전체 조회 테스트 (Mocking DB)
 @patch('app.routes.get_db')
@@ -43,13 +47,14 @@ def test_get_rooms(mock_get_db, client):
 def test_create_room(mock_get_db, client):
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
+    mock_cursor.fetchone.return_value = None
     mock_cursor.lastrowid = 1
     mock_conn.cursor.return_value = mock_cursor
     mock_get_db.return_value = mock_conn
 
-    room_data = {"name": "New Room", "capacity": 8, "equipment": "Whiteboard"}
+    room_data = {"name": "Grand Hall A", "capacity": 180, "equipment": "Whiteboard"}
     response = client.post('/api/rooms', json=room_data)
-    
+
     assert response.status_code == 201
     assert response.get_json() == {"id": 1, "message": "created"}
 

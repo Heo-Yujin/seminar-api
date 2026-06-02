@@ -5,15 +5,23 @@ const state = {
 
 const el = {
   health: document.querySelector("#healthStatus"),
+  healthSummary: document.querySelector("#healthSummary"),
   refreshAll: document.querySelector("#refreshAll"),
   roomForm: document.querySelector("#roomForm"),
+  roomName: document.querySelector("#roomName"),
+  roomCapacity: document.querySelector("#roomCapacity"),
   resetRoom: document.querySelector("#resetRoom"),
   roomsTable: document.querySelector("#roomsTable"),
   roomCount: document.querySelector("#roomCount"),
+  roomSummary: document.querySelector("#roomSummary"),
+  lookupRoomId: document.querySelector("#lookupRoomId"),
+  lookupRoom: document.querySelector("#lookupRoom"),
+  roomDetail: document.querySelector("#roomDetail"),
   reservationForm: document.querySelector("#reservationForm"),
   resetReservation: document.querySelector("#resetReservation"),
   reservationsTable: document.querySelector("#reservationsTable"),
   reservationCount: document.querySelector("#reservationCount"),
+  reservationSummary: document.querySelector("#reservationSummary"),
   filterRoomId: document.querySelector("#filterRoomId"),
   filterDate: document.querySelector("#filterDate"),
   applyFilters: document.querySelector("#applyFilters"),
@@ -41,6 +49,12 @@ async function api(path, options = {}) {
 
 function formData(form) {
   return Object.fromEntries(new FormData(form).entries());
+}
+
+function setRoomCapacityFromName() {
+  const selected = el.roomName.selectedOptions[0];
+  const capacity = selected?.dataset.capacity || "";
+  el.roomCapacity.value = capacity;
 }
 
 function normalizePayload(data, numberFields = []) {
@@ -71,9 +85,11 @@ async function checkHealth() {
   try {
     const data = await api("/health");
     el.health.textContent = `health: ${data.status}`;
+    el.healthSummary.textContent = "정상";
     el.health.className = "status-pill ok";
   } catch (error) {
     el.health.textContent = "health: error";
+    el.healthSummary.textContent = "오류";
     el.health.className = "status-pill error";
   }
 }
@@ -82,7 +98,18 @@ async function loadRooms() {
   const data = await api("/api/rooms");
   state.rooms = data.items || [];
   el.roomCount.textContent = `${data.count || 0}개`;
+  el.roomSummary.textContent = `등록된 룸 ${data.count || 0}개`;
   renderRooms();
+}
+
+async function lookupRoom() {
+  const id = el.lookupRoomId.value;
+  if (!id) {
+    el.roomDetail.textContent = "조회할 룸 ID를 입력하세요.";
+    return;
+  }
+  const room = await api(`/api/rooms/${id}`);
+  el.roomDetail.textContent = `${room.name} / 수용 ${room.capacity}명 / 장비 ${room.equipment || "없음"}`;
 }
 
 function renderRooms() {
@@ -114,6 +141,12 @@ function renderRooms() {
 async function submitRoom(event) {
   event.preventDefault();
   const data = normalizePayload(formData(el.roomForm), ["capacity"]);
+  const fixedCapacity = Number(el.roomName.selectedOptions[0]?.dataset.capacity || 0);
+  if (fixedCapacity && data.capacity !== fixedCapacity) {
+    showToast("수용 인원은 룸 이름에 맞게 고정됩니다.");
+    el.roomCapacity.value = String(fixedCapacity);
+    return;
+  }
   const id = data.id;
   delete data.id;
   await api(id ? `/api/rooms/${id}` : "/api/rooms", {
@@ -137,6 +170,7 @@ async function loadReservations() {
   const data = await api(`/api/reservations${reservationQuery()}`);
   state.reservations = data.items || [];
   el.reservationCount.textContent = `${data.count || 0}개`;
+  el.reservationSummary.textContent = `조회된 예약 ${data.count || 0}개`;
   renderReservations();
 }
 
@@ -182,8 +216,16 @@ async function refreshAll() {
 }
 
 el.refreshAll.addEventListener("click", refreshAll);
+el.roomName.addEventListener("change", setRoomCapacityFromName);
 el.roomForm.addEventListener("submit", (event) => submitRoom(event).catch((error) => showToast(error.message)));
-el.resetRoom.addEventListener("click", () => el.roomForm.reset());
+el.resetRoom.addEventListener("click", () => {
+  el.roomForm.reset();
+  el.roomCapacity.value = "";
+});
+el.lookupRoom.addEventListener("click", () => lookupRoom().catch((error) => {
+  el.roomDetail.textContent = "해당 룸을 찾을 수 없습니다.";
+  showToast(error.message);
+}));
 el.reservationForm.addEventListener("submit", (event) => submitReservation(event).catch((error) => showToast(error.message)));
 el.resetReservation.addEventListener("click", () => el.reservationForm.reset());
 el.applyFilters.addEventListener("click", () => loadReservations().catch((error) => showToast(error.message)));
