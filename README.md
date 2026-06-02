@@ -203,7 +203,8 @@ GitHub Actions 워크플로는 .github/workflows/deploy.yml 에 둔다.
 
 배포 방식:
 - 서버에 GitHub self-hosted runner를 미리 등록한다.
-- runner 라벨은 deploy.yml 의 runs-on 과 맞춰 web-prod 를 사용한다.
+- deploy.yml 은 기본 self-hosted Linux/X64 runner 라벨을 사용한다.
+- runner 등록 시 web-prod 같은 추가 라벨을 붙여도 되지만, 워크플로 필수 조건은 아니다.
 - main 브랜치가 수정되면 runner가 저장소를 checkout 한 뒤 docker compose up -d --build 를 실행한다.
 - 기존 SSH 배포용 Secrets(SERVER_HOST, SERVER_USER, SERVER_SSH_KEY)는 사용하지 않는다.
 
