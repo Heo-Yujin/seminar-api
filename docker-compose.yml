@@ -4,6 +4,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: seminar_db
+      MYSQL_USER: seminar_user
+      MYSQL_PASSWORD: seminar_password
     ports:
       - "3307:3306"
     volumes:
