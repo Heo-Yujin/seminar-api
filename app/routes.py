@@ -51,10 +51,9 @@ def catalog_name_params():
 
 def serialize_room(row):
     row = serialize_row(row)
-    row["db_id"] = row.pop("db_id", row.get("id"))
-    catalog_room = get_catalog_room(row.get("name"))
-    row["room_number"] = row.get("room_number") or (catalog_room["number"] if catalog_room else None)
-    row["id"] = row.get("room_number")
+    # DB의 id(방 번호)를 프론트엔드가 요구하는 형식에 맞게 매핑
+    row["room_number"] = row.get("id")
+    row["db_id"] = row.get("id")
     return row
 
 # MariaDB 데이터 타입(Date, Timedelta)을 JSON 직렬화 가능한 형태로 변환하는 헬퍼 함수
@@ -71,23 +70,22 @@ def serialize_row(row):
             seconds = total_seconds % 60
             row[k] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     return row
-
 # 5.3 헬스체크
 @api_bp.route('/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "ok"}), 200
-
 # 5.1 세미나룸 CRUD
 @api_bp.route('/api/rooms', methods=['GET'])
 def get_rooms():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     names, placeholders = catalog_name_params()
+    # 에러 원인이던 room_number를 제거하고 지시서 스키마대로 id를 조회 및 정렬합니다.
     cursor.execute(
-        f"""SELECT id AS db_id, room_number, name, capacity, equipment, created_at, updated_at
+        f"""SELECT id, name, capacity, equipment, created_at, updated_at
             FROM rooms
             WHERE name IN ({placeholders})
-            ORDER BY room_number ASC""",
+            ORDER BY id ASC""",
         tuple(names),
     )
     rooms = [serialize_room(row) for row in cursor.fetchall()]
@@ -97,8 +95,9 @@ def get_rooms():
 def get_room(room_id):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
+    # room_number 대신 id로 조회합니다.
     cursor.execute(
-        "SELECT id AS db_id, room_number, name, capacity, equipment, created_at, updated_at FROM rooms WHERE room_number = ?",
+        "SELECT id, name, capacity, equipment, created_at, updated_at FROM rooms WHERE id = ?",
         (room_id,),
     )
     room = cursor.fetchone()
@@ -114,7 +113,7 @@ def create_room():
         return jsonify({"error": "Room name must be selected from the fixed room catalog"}), 400
 
     name = catalog_room["name"]
-    room_number = catalog_room["number"]
+    room_number = catalog_room["number"] # 카탈로그 고유 번호 (예: 101)
     capacity = catalog_room["capacity"]
     equipment = data.get('equipment')
 
@@ -123,12 +122,14 @@ def create_room():
 
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id FROM rooms WHERE name = ? OR room_number = ?", (name, room_number))
+    # 이미 등록된 방인지 id(배정 번호) 또는 이름으로 중복 체크합니다.
+    cursor.execute("SELECT id FROM rooms WHERE name = ? OR id = ?", (name, room_number))
     if cursor.fetchone():
         return jsonify({"error": "Room already exists in catalog"}), 409
 
+    # 지시서의 테이블 id 컬럼에 카탈로그 방 번호를 명시적으로 삽입합니다.
     cursor.execute(
-        "INSERT INTO rooms (room_number, name, capacity, equipment) VALUES (?, ?, ?, ?)",
+        "INSERT INTO rooms (id, name, capacity, equipment) VALUES (?, ?, ?, ?)",
         (room_number, name, capacity, equipment)
     )
     return jsonify({"id": room_number, "message": "created"}), 201
@@ -154,7 +155,7 @@ def update_room(room_id):
     if not cursor.fetchone():
         abort(404, description="Room not found")
     cursor.execute(
-        "UPDATE rooms SET room_number = ?, name = ?, capacity = ?, equipment = ? WHERE room_number = ?",
+        "UPDATE rooms SET id = ?, name = ?, capacity = ?, equipment = ? WHERE id = ?",
         (room_number, name, capacity, equipment, room_id)
     )
     return jsonify({"id": room_id, "message": "updated"}), 200
@@ -164,10 +165,10 @@ def delete_room(room_id):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM rooms WHERE room_number = ?", (room_id,))
+
     if cursor.rowcount == 0:
         abort(404, description="Room not found")
     return jsonify({"id": room_id, "message": "deleted"}), 200
-
 
 # 5.2 예약 관리 CRUD
 @api_bp.route('/api/reservations', methods=['GET'])
@@ -206,8 +207,8 @@ def create_reservation():
     if not catalog_room:
         return jsonify({"error": "Room ID must be selected from the fixed room catalog"}), 400
 
-    # 외래키 참조 방지를 위한 방어 코드 (고정 룸 번호가 실제 DB에 존재하는지 점검)
-    cursor.execute("SELECT room_number FROM rooms WHERE room_number = ?", (catalog_room["number"],))
+    # 외래키 참조 점검 시 rooms 테이블의 id 컬럼을 대조합니다.
+    cursor.execute("SELECT id FROM rooms WHERE id = ?", (catalog_room["number"],))
     if not cursor.fetchone():
         return jsonify({"error": "Referenced room does not exist"}), 400
 
