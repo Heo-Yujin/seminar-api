@@ -136,7 +136,7 @@ seminar-api/
 ├─ README.md
 └─ .github/
    └─ workflows/
-      └─ ci-cd.yml
+      └─ deploy.yml
 
 8. 역할 분담 (브랜치 기준)
 A(API + DB, devA)
@@ -150,8 +150,8 @@ B(Docker + CI/CD, devB)
 브랜치: devB 주인
 Dockerfile, docker-compose.yml 작성
 requirements.txt 정리
-.github/workflows/ci-cd.yml 작성(테스트 → 빌드 → SSH 배포)
-서버 환경 설정(Docker, docker-compose, SSH 키)
+.github/workflows/deploy.yml 작성(테스트 → self-hosted runner 배포)
+서버 환경 설정(Docker, docker compose, GitHub self-hosted runner)
 devB → main 머지 요청
 
 9. 구현 단계
@@ -196,13 +196,22 @@ Python 단독 실행이 필요한 경우:
 python run.py
 
 11. CI/CD 구성
-GitHub Actions 워크플로는 .github/workflows/ci-cd.yml 에 둔다.
+GitHub Actions 워크플로는 .github/workflows/deploy.yml 에 둔다.
 동작:
 - pull_request -> main: 의존성 설치 후 테스트 실행
-- push -> main: 테스트 통과 후 SSH 배포
+- push -> main: 테스트 통과 후 서버에 설치된 self-hosted runner에서 배포
 
-배포에 필요한 GitHub Secrets:
-- SERVER_HOST
-- SERVER_USER
-- SERVER_SSH_KEY
+배포 방식:
+- 서버에 GitHub self-hosted runner를 미리 등록한다.
+- deploy.yml 은 기본 self-hosted Linux/X64 runner 라벨을 사용한다.
+- runner 등록 시 web-prod 같은 추가 라벨을 붙여도 되지만, 워크플로 필수 조건은 아니다.
+- main 브랜치가 수정되면 runner가 저장소를 checkout 한 뒤 docker compose up -d --build 를 실행한다.
+- 기존 SSH 배포용 Secrets(SERVER_HOST, SERVER_USER, SERVER_SSH_KEY)는 사용하지 않는다.
+
+서버 사전 조건:
+- Docker 설치
+- Docker Compose plugin 설치
+- GitHub Actions self-hosted runner 서비스 등록 및 시작
+- runner 사용자에게 Docker 실행 권한 부여
+- Traefik 외부 네트워크 docker-compose_exam1-net 존재
 

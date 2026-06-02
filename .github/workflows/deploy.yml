@@ -1,6 +1,7 @@
-name: CI/CD Pipeline
+name: Deploy to Server
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - main
@@ -8,8 +9,13 @@ on:
     branches:
       - main
 
+concurrency:
+  group: seminar-api-deploy
+  cancel-in-progress: true
+
 jobs:
   test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -34,17 +40,27 @@ jobs:
         run: python -m pytest tests/
 
   deploy:
-    if: github.event_name == 'push'
+    name: Deploy
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: test
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
     steps:
-      - name: Deploy to server via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Checkout main
+        uses: actions/checkout@v4
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            cd /home/${{ secrets.SERVER_USER }}/seminar-api
-            git pull origin main
-            docker compose up -d --build
+          ref: main
+
+      - name: Verify Docker
+        run: |
+          docker --version
+          docker compose version
+          docker info
+
+      - name: Deploy latest main
+        run: |
+          docker compose up -d --build --remove-orphans
+          docker compose ps
+          curl -fsS http://localhost:8000/health
