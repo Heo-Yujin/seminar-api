@@ -45,6 +45,7 @@ jobs:
     needs: test
     runs-on:
       - self-hosted
+      - Linux
       - X64
     steps:
       - name: Checkout main
@@ -53,15 +54,13 @@ jobs:
           ref: main
 
       - name: Verify Docker
-        shell: pwsh
         run: |
           docker --version
           docker compose version
           docker info
 
       - name: Deploy latest main
-        shell: pwsh
         run: |
           docker compose up -d --build --remove-orphans
           docker compose ps
-          Invoke-RestMethod http://localhost:8000/health
+          curl -fsS http://localhost:8000/health
