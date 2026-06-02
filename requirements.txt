@@ -1,6 +1,5 @@
-Flask==3.0.3
-gunicorn==22.0.0
-mysql-connector-python==8.3.0
-python-dotenv==1.0.1
-pytest==8.2.2
-requests==2.32.3
+Flask==3.0.0
+mariadb==1.1.8
+gunicorn==21.2.0
+python-dotenv==1.0.0
+pytest==7.4.3
