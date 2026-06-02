@@ -4,12 +4,14 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: seminar_db
+      MYSQL_USER: seminar_user
+      MYSQL_PASSWORD: seminar_password
     ports:
       - "3307:3306"
     volumes:
       - seminar_data:/var/lib/mysql
       - ./migrations:/docker-entrypoint-initdb.d
-    networks:              # ★ 추가: 사용할 네트워크 지정
+    networks:
       - my_new_network
 
   api:
@@ -17,18 +19,23 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DB_HOST: db
-      DB_USER: root
-      DB_PASSWORD: rootpassword
+      DB_HOST: seminar-api-db-1
+      DB_USER: seminar_user
+      DB_PASSWORD: seminar_password
       DB_NAME: seminar_db
     depends_on:
       - db
-    networks:              # ★ 추가: 사용할 네트워크 지정
-      - my_new_network
+    networks:
+      my_new_network:
+      traefik_net:
+        aliases:
+          - seminar-api
 
 volumes:
   seminar_data:
 
-# ★ 추가: 도커 기본 네트워크(default)를 버리고 새 네트워크 생성
 networks:
   my_new_network:
+  traefik_net:
+    external: true
+    name: docker-compose_exam1-net

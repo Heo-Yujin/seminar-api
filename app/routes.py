@@ -70,17 +70,11 @@ def serialize_row(row):
             seconds = total_seconds % 60
             row[k] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     return row
-
-# ==========================================
 # 5.3 헬스체크
-# ==========================================
 @api_bp.route('/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "ok"}), 200
-
-# ==========================================
 # 5.1 세미나룸 CRUD
-# ==========================================
 @api_bp.route('/api/rooms', methods=['GET'])
 def get_rooms():
     conn = get_db()
@@ -157,29 +151,26 @@ def update_room(room_id):
 
     conn = get_db()
     cursor = conn.cursor()
-    # room_number 조건절을 모두 id로 변경합니다.
+    cursor.execute("SELECT id FROM rooms WHERE room_number = ?", (room_id,))
+    if not cursor.fetchone():
+        abort(404, description="Room not found")
     cursor.execute(
         "UPDATE rooms SET id = ?, name = ?, capacity = ?, equipment = ? WHERE id = ?",
         (room_number, name, capacity, equipment, room_id)
     )
-    if cursor.rowcount == 0:
-        abort(404, description="Room not found")
     return jsonify({"id": room_id, "message": "updated"}), 200
 
 @api_bp.route('/api/rooms/<int:room_id>', methods=['DELETE'])
 def delete_room(room_id):
     conn = get_db()
     cursor = conn.cursor()
-    # id 컬럼을 기준으로 삭제를 진행합니다.
-    cursor.execute("DELETE FROM rooms WHERE id = ?", (room_id,))
+    cursor.execute("DELETE FROM rooms WHERE room_number = ?", (room_id,))
+
     if cursor.rowcount == 0:
         abort(404, description="Room not found")
     return jsonify({"id": room_id, "message": "deleted"}), 200
 
-
-# ==========================================
 # 5.2 예약 관리 CRUD
-# ==========================================
 @api_bp.route('/api/reservations', methods=['GET'])
 def get_reservations():
     room_id = request.args.get('room_id')

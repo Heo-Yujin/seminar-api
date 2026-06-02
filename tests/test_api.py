@@ -19,11 +19,11 @@ def test_health_check(client):
 def test_index_page_renders(client):
     response = client.get('/')
     assert response.status_code == 200
-    assert b"Seminar Room Admin" in response.data
-    assert b'<select name="name"' in response.data
+    assert b"Seminar Room Reservation" in response.data
+    assert b'<select name="name"' not in response.data
     assert b'<select name="room_id"' in response.data
-    assert b'name="capacity" id="roomCapacity" type="number"' in response.data
-    assert b"readonly" in response.data
+    assert b'id="roomsTable"' not in response.data
+    assert b'id="roomForm"' not in response.data
 
 # 2. 세미나룸 전체 조회 테스트 (Mocking DB)
 @patch('app.routes.get_db')
