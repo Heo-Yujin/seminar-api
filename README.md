@@ -118,11 +118,17 @@ seminar-api/
 │  ├─ __init__.py
 │  ├─ config.py
 │  ├─ db.py
-│  └─ routes.py
+│  ├─ routes.py
+│  ├─ templates/
+│  │  └─ index.html
+│  └─ static/
+│     ├─ css/styles.css
+│     └─ js/app.js
 ├─ migrations/
 │  └─ 001_init.sql
 ├─ tests/
 │  └─ test_api.py
+├─ run.py
 ├─ Dockerfile
 ├─ docker-compose.yml
 ├─ requirements.txt
@@ -164,4 +170,39 @@ cd seminar-api
 git checkout -b devA   # A
 git checkout -b devB   # B
 A 는 devA, B 는 devB 에서 작업.
+
+10. 서비스 화면 구성
+Flask/Jinja2 렌더링 화면은 GET / 에서 제공한다.
+화면 구성:
+- API 명세 요약: rooms, reservations, health 엔드포인트 확인
+- 세미나룸 CRUD: 생성, 목록 조회, 수정, 삭제
+- 예약 CRUD: 생성, 목록 조회, room_id/date 필터 조회, 취소
+
+정적 파일:
+- app/templates/index.html: Jinja2 기반 관리 화면
+- app/static/css/styles.css: 화면 스타일
+- app/static/js/app.js: /api/rooms, /api/reservations, /health 호출 로직
+
+로컬 실행:
+
+docker compose up -d --build
+
+접속:
+
+http://localhost:8000
+
+Python 단독 실행이 필요한 경우:
+
+python run.py
+
+11. CI/CD 구성
+GitHub Actions 워크플로는 .github/workflows/ci-cd.yml 에 둔다.
+동작:
+- pull_request -> main: 의존성 설치 후 테스트 실행
+- push -> main: 테스트 통과 후 SSH 배포
+
+배포에 필요한 GitHub Secrets:
+- SERVER_HOST
+- SERVER_USER
+- SERVER_SSH_KEY
 

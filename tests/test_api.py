@@ -16,6 +16,11 @@ def test_health_check(client):
     assert response.status_code == 200
     assert response.get_json() == {"status": "ok"}
 
+def test_index_page_renders(client):
+    response = client.get('/')
+    assert response.status_code == 200
+    assert b"Seminar Room Admin" in response.data
+
 # 2. 세미나룸 전체 조회 테스트 (Mocking DB)
 @patch('app.routes.get_db')
 def test_get_rooms(mock_get_db, client):

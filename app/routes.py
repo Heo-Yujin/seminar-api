@@ -1,9 +1,40 @@
-# app/routes.py
 import datetime
-from flask import Blueprint, jsonify, request, abort
+from flask import Blueprint, jsonify, request, abort, render_template
 from app.db import get_db
 
 api_bp = Blueprint('api', __name__)
+
+ROOM_FIELDS = [
+    {"name": "id", "label": "ID", "type": "number", "readonly": True},
+    {"name": "name", "label": "룸 이름", "type": "text", "required": True},
+    {"name": "capacity", "label": "수용 인원", "type": "number", "required": True},
+    {"name": "equipment", "label": "장비", "type": "text"},
+]
+
+RESERVATION_FIELDS = [
+    {"name": "id", "label": "ID", "type": "number", "readonly": True},
+    {"name": "room_id", "label": "룸 ID", "type": "number", "required": True},
+    {"name": "user_name", "label": "예약자", "type": "text", "required": True},
+    {"name": "user_email", "label": "이메일", "type": "email", "required": True},
+    {"name": "date", "label": "날짜", "type": "date", "required": True},
+    {"name": "start_time", "label": "시작", "type": "time", "required": True},
+    {"name": "end_time", "label": "종료", "type": "time", "required": True},
+    {"name": "purpose", "label": "목적", "type": "text"},
+]
+
+
+@api_bp.route('/', methods=['GET'])
+def index():
+    return render_template(
+        'index.html',
+        room_fields=ROOM_FIELDS,
+        reservation_fields=RESERVATION_FIELDS,
+        api_spec={
+            "rooms": ["GET /api/rooms", "POST /api/rooms", "PUT /api/rooms/<id>", "DELETE /api/rooms/<id>"],
+            "reservations": ["GET /api/reservations", "POST /api/reservations", "DELETE /api/reservations/<id>"],
+            "health": "GET /health",
+        },
+    )
 
 # MariaDB 데이터 타입(Date, Timedelta)을 JSON 직렬화 가능한 형태로 변환하는 헬퍼 함수
 def serialize_row(row):
@@ -51,7 +82,7 @@ def create_room():
     capacity = data.get('capacity')
     equipment = data.get('equipment')
 
-    if not name or not capacity:
+    if not name or capacity is None:
         return jsonify({"error": "Missing required fields"}), 400
 
     conn = get_db()
@@ -69,7 +100,7 @@ def update_room(room_id):
     capacity = data.get('capacity')
     equipment = data.get('equipment')
 
-    if not name or not capacity:
+    if not name or capacity is None:
         return jsonify({"error": "Missing required fields"}), 400
 
     conn = get_db()

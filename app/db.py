@@ -1,9 +1,10 @@
 # app/db.py
-import mariadb
 from flask import g, current_app
 
 def get_db():
     if 'db' not in g:
+        import mariadb
+
         g.db = mariadb.connect(
             host=current_app.config['DB_HOST'],
             user=current_app.config['DB_USER'],

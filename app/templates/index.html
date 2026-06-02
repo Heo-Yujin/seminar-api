@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seminar Room Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Flask + MariaDB CRUD</p>
+      <h1>Seminar Room Admin</h1>
+    </div>
+    <div class="status-pill" id="healthStatus">health 확인 중</div>
+  </header>
+
+  <main class="layout">
+    <section class="panel api-panel">
+      <div class="panel-header">
+        <h2>API 명세</h2>
+        <button class="ghost-button" id="refreshAll" type="button">새로고침</button>
+      </div>
+      <div class="spec-grid">
+        <div>
+          <h3>Rooms</h3>
+          {% for item in api_spec.rooms %}
+          <code>{{ item }}</code>
+          {% endfor %}
+        </div>
+        <div>
+          <h3>Reservations</h3>
+          {% for item in api_spec.reservations %}
+          <code>{{ item }}</code>
+          {% endfor %}
+        </div>
+        <div>
+          <h3>Health</h3>
+          <code>{{ api_spec.health }}</code>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <article class="panel">
+        <div class="panel-header">
+          <h2>세미나룸</h2>
+          <span id="roomCount" class="count-badge">0개</span>
+        </div>
+        <form id="roomForm" class="form-grid">
+          <input type="hidden" name="id">
+          {% for field in room_fields if not field.readonly %}
+          <label>
+            <span>{{ field.label }}</span>
+            <input name="{{ field.name }}" type="{{ field.type }}" {% if field.required %}required{% endif %}>
+          </label>
+          {% endfor %}
+          <div class="button-row">
+            <button type="submit">저장</button>
+            <button class="secondary" type="button" id="resetRoom">초기화</button>
+          </div>
+        </form>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                {% for field in room_fields %}
+                <th>{{ field.label }}</th>
+                {% endfor %}
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="roomsTable"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <h2>예약</h2>
+          <span id="reservationCount" class="count-badge">0개</span>
+        </div>
+        <form id="reservationForm" class="form-grid reservation-form">
+          {% for field in reservation_fields if not field.readonly %}
+          <label>
+            <span>{{ field.label }}</span>
+            <input name="{{ field.name }}" type="{{ field.type }}" {% if field.required %}required{% endif %}>
+          </label>
+          {% endfor %}
+          <div class="button-row">
+            <button type="submit">예약</button>
+            <button class="secondary" type="button" id="resetReservation">초기화</button>
+          </div>
+        </form>
+        <div class="filters">
+          <label>
+            <span>룸 ID 필터</span>
+            <input id="filterRoomId" type="number" min="1">
+          </label>
+          <label>
+            <span>날짜 필터</span>
+            <input id="filterDate" type="date">
+          </label>
+          <button class="ghost-button" type="button" id="applyFilters">필터 적용</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                {% for field in reservation_fields %}
+                <th>{{ field.label }}</th>
+                {% endfor %}
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="reservationsTable"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
