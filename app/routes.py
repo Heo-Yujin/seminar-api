@@ -150,12 +150,13 @@ def update_room(room_id):
 
     conn = get_db()
     cursor = conn.cursor()
+    cursor.execute("SELECT id FROM rooms WHERE room_number = ?", (room_id,))
+    if not cursor.fetchone():
+        abort(404, description="Room not found")
     cursor.execute(
         "UPDATE rooms SET room_number = ?, name = ?, capacity = ?, equipment = ? WHERE room_number = ?",
         (room_number, name, capacity, equipment, room_id)
     )
-    if cursor.rowcount == 0:
-        abort(404, description="Room not found")
     return jsonify({"id": room_id, "message": "updated"}), 200
 
 @api_bp.route('/api/rooms/<int:room_id>', methods=['DELETE'])
