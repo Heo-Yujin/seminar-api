@@ -151,7 +151,7 @@ def update_room(room_id):
 
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id FROM rooms WHERE room_number = ?", (room_id,))
+    cursor.execute("SELECT id FROM rooms WHERE id = ?", (room_id,))
     if not cursor.fetchone():
         abort(404, description="Room not found")
     cursor.execute(
@@ -164,7 +164,7 @@ def update_room(room_id):
 def delete_room(room_id):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM rooms WHERE room_number = ?", (room_id,))
+    cursor.execute("DELETE FROM rooms WHERE id = ?", (room_id,))
 
     if cursor.rowcount == 0:
         abort(404, description="Room not found")

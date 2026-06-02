@@ -8,5 +8,7 @@ class Config:
     DB_NAME = os.getenv("DB_NAME", "seminar_db")
     DB_PORT = int(os.getenv("DB_PORT", 3306))
     
+    SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "seminar.db")
+
     # JSON 응답 시 한글 깨짐 방지
     JSON_AS_ASCII = False
